@@ -1,0 +1,62 @@
+import React, { useState, useEffect } from "react";
+import io from "socket.io-client";
+
+const socket = io("http://localhost:3001");
+
+function ChatApp() {
+  const [message, setMessage] = useState("");
+  const [chat, setChat] = useState([]);
+
+  useEffect(() => {
+    socket.on("chat message", (msg) => {
+      setChat([...chat, msg]);
+    });
+  }, [chat]);
+
+  const sendMessage = () => {
+    socket.emit("chat message", message);
+    setMessage("");
+  };
+
+  return (
+    <div>
+      <h2>Application de Chat</h2>
+      <div>
+        {chat.map((msg, index) => (
+          <p key={index}>{msg}</p>
+        ))}
+      </div>
+      <input
+        type="text"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+      />
+      <button onClick={sendMessage}>Envoyer</button>
+    </div>
+  );
+}
+
+export default ChatApp;
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+io.on("connection", (socket) => {
+  console.log("Un utilisateur est connecté");
+
+  socket.on("chat message", (msg) => {
+    io.emit("chat message", msg);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Un utilisateur s'est déconnecté");
+  });
+});
+
+server.listen(3001, () => {
+  console.log("Serveur de chat en écoute sur le port 3001");
+});
